@@ -1,1 +1,122 @@
+Objective 1: System Health Monitoring Script
+Step-by-Step Solution
+Define Thresholds: Set the thresholds for CPU usage, memory usage, and disk space.
+Monitor System Metrics:
+CPU Usage: Use top or mpstat to get CPU usage.
+Memory Usage: Use free to get memory usage.
+Disk Space: Use df to get disk space usage.
+Running Processes: Use ps to get the list of running processes.
+Send Alerts: Check if the metrics exceed the predefined thresholds and log alerts to a file.
+Bash Script:
 
+#!/bin/bash
+
+# Define thresholds
+
+CPU_THRESHOLD=80
+MEMORY_THRESHOLD=80
+DISK_THRESHOLD=80
+
+# Log file
+
+LOG_FILE="system_health.log"
+
+# Function to log alerts
+
+log_alert() {
+echo "$(date): $1" | tee -a $LOG_FILE
+}
+
+# Check CPU usage
+
+check_cpu_usage() {
+cpu_usage=$(mpstat 1 1 | awk '/Average/ {print 100 - $NF}')
+    cpu_usage=${cpu_usage%.\*} # Convert to integer
+if [ "$cpu_usage" -gt "$CPU_THRESHOLD" ]; then
+log_alert "High CPU usage detected: $cpu_usage%"
+fi
+}
+
+# Check memory usage
+
+check_memory_usage() {
+memory_usage=$(free | awk '/Mem/ {print $3/$2 * 100.0}')
+    memory_usage=${memory_usage%.\*} # Convert to integer
+if [ "$memory_usage" -gt "$MEMORY_THRESHOLD" ]; then
+log_alert "High Memory usage detected: $memory_usage%"
+fi
+}
+
+# Check disk usage
+
+check_disk_usage() {
+disk_usage=$(df / | awk 'NR==2 {print $5}' | sed 's/%//')
+    if [ "$disk_usage" -gt "$DISK_THRESHOLD" ]; then
+log_alert "High Disk usage detected: $disk_usage%"
+fi
+}
+
+# List running processes
+
+list_running_processes() {
+processes=$(ps -e -o pid,comm --sort=-%mem | head -n 11)
+    log_alert "Running processes:\n$processes"
+}
+
+# Main function
+
+main() {
+check_cpu_usage
+check_memory_usage
+check_disk_usage
+list_running_processes
+}
+
+main
+
+Objective 3: Log File Analyzer
+Step-by-Step Solution
+Read Log File: Use cat to read the log file.
+Analyze Patterns:
+Count 404 Errors: Use grep to count occurrences of "404" status code.
+Most Requested Pages: Use awk and sort to identify the most requested pages.
+IP Addresses with Most Requests: Use awk and sort to identify IP addresses with the most requests.
+Output Summary Report: Print the summarized report to the console.
+Bash Script:
+
+#!/bin/bash
+
+# Define the path to the log file
+
+LOG_FILE="web_server.log"
+
+# Function to count 404 errors
+
+count_404_errors() {
+num_404_errors=$(grep " 404 " $LOG_FILE | wc -l)
+echo "Number of 404 errors: $num_404_errors"
+}
+
+# Function to find the most requested pages
+
+most_requested_pages() {
+most_requested_page=$(awk '{print $7}' $LOG_FILE | sort | uniq -c | sort -nr | head -n 1)
+echo "Most requested page: $most_requested_page"
+}
+
+# Function to find IP addresses with the most requests
+
+most_active_ips() {
+most_active_ip=$(awk '{print $1}' $LOG_FILE | sort | uniq -c | sort -nr | head -n 1)
+echo "IP address with the most requests: $most_active_ip"
+}
+
+# Main function
+
+main() {
+count_404_errors
+most_requested_pages
+most_active_ips
+}
+
+main
